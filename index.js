@@ -37,7 +37,7 @@ import {
 } from '../../../group-chats.js';
 
 // 扩展名和设置初始化
-const PLUGIN_NAME = 'chat-history-backup9';
+const PLUGIN_NAME = 'chat-history-backupA';
 const DEFAULT_SETTINGS = {
     maxTotalBackups: 3,        // 整个系统保留的最大备份数量
     backupDebounceDelay: 1000, // 防抖延迟时间 (毫秒)
@@ -1118,6 +1118,24 @@ jQuery(async () => {
                     const chat = backup.chat;
                     const lastMessages = chat.slice(-2);
                     
+                    // 过滤标签并处理Markdown
+                    const processMessage = (messageText) => {
+                        if (!messageText) return '(空消息)';
+                        
+                        // 过滤<think>和<thinking>标签及其内容
+                        let processed = messageText
+                            .replace(/<think>[\s\S]*?<\/think>/g, '')
+                            .replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
+                        
+                        // 简单的Markdown处理，可以根据需要扩展
+                        return processed
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // 粗体
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')              // 斜体
+                            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>') // 代码块
+                            .replace(/`(.*?)`/g, '<code>$1</code>')            // 内联代码
+                            .replace(/\n/g, '<br>');                           // 换行
+                    };
+                    
                     // 创建预览内容
                     const previewContent = document.createElement('div');
                     previewContent.innerHTML = `
@@ -1126,7 +1144,7 @@ jQuery(async () => {
                             ${lastMessages.map(msg => `
                                 <div class="backup_preview_message">
                                     <div class="backup_preview_sender">${msg.name || '未知'}:</div>
-                                    <div class="backup_preview_text">${msg.mes || '(空消息)'}</div>
+                                    <div class="backup_preview_text">${processMessage(msg.mes)}</div>
                                 </div>
                             `).join('')}
                         </div>
@@ -1142,6 +1160,7 @@ jQuery(async () => {
                     await callGenericPopup(previewContent, POPUP_TYPE.DISPLAY, '', {
                         wide: true,
                         allowVerticalScrolling: true,
+                        leftAlign: true, // 设置文本左对齐
                         okButton: '关闭'
                     });
                     
