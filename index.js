@@ -1129,8 +1129,8 @@ jQuery(async () => {
                         
                         // 过滤代码块和白毛控名称
                         processed = processed
-                            .replace(/```[\s\S]*?```/g, '[代码已过滤]')    // 移除代码块
-                            .replace(/`[\s\S]*?`/g, '[代码已过滤]');       // 移除内联代码
+                            .replace(/```[\s\S]*?```/g, '')    // 移除代码块
+                            .replace(/`[\s\S]*?`/g, '');       // 移除内联代码
                         
                         // 简单的Markdown处理，保留部分格式
                         processed = processed
