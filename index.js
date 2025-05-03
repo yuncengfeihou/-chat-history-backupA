@@ -1136,7 +1136,7 @@ jQuery(async () => {
                         processed = processed
                             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // 粗体
                             .replace(/\*(.*?)\*/g, '<em>$1</em>')              // 斜体
-                            .replace(/\n\n+/g, '\n\n')                         // 多个连续换行替换为两个
+                            .replace(/\n\n+/g, '\n')                         // 多个连续换行替换为两个
                             .replace(/\n/g, '<br>');                           // 换行
                         
                         return processed;
