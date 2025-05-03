@@ -1127,31 +1127,79 @@ jQuery(async () => {
                             .replace(/<think>[\s\S]*?<\/think>/g, '')
                             .replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
                         
-                        // 简单的Markdown处理，可以根据需要扩展
-                        return processed
+                        // 过滤代码块和白毛控名称
+                        processed = processed
+                            .replace(/```[\s\S]*?```/g, '[代码已过滤]')    // 移除代码块
+                            .replace(/`[\s\S]*?`/g, '[代码已过滤]');       // 移除内联代码
+                        
+                        // 简单的Markdown处理，保留部分格式
+                        processed = processed
                             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // 粗体
                             .replace(/\*(.*?)\*/g, '<em>$1</em>')              // 斜体
-                            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>') // 代码块
-                            .replace(/`(.*?)`/g, '<code>$1</code>')            // 内联代码
+                            .replace(/\n\n+/g, '\n\n')                         // 多个连续换行替换为两个
                             .replace(/\n/g, '<br>');                           // 换行
+                        
+                        return processed;
                     };
+                    
+                    // 创建样式
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        .message_box {
+                            padding: 10px;
+                            margin-bottom: 10px;
+                            border-radius: 8px;
+                            background: rgba(0, 0, 0, 0.15);
+                        }
+                        .message_sender {
+                            font-weight: bold;
+                            margin-bottom: 5px;
+                            color: var(--SmColor);
+                        }
+                        .message_content {
+                            white-space: pre-wrap;
+                            line-height: 1.4;
+                        }
+                        .message_content br + br {
+                            margin-top: 0.5em;
+                        }
+                    `;
                     
                     // 创建预览内容
                     const previewContent = document.createElement('div');
-                    previewContent.innerHTML = `
-                        <h3>${backup.entityName} - ${backup.chatName} 预览</h3>
-                        <div class="backup_preview_content">
-                            ${lastMessages.map(msg => `
-                                <div class="backup_preview_message">
-                                    <div class="backup_preview_sender">${msg.name || '未知'}:</div>
-                                    <div class="backup_preview_text">${processMessage(msg.mes)}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="backup_preview_footer">
-                            <small>显示最后 ${lastMessages.length} 条消息，共 ${chat.length} 条</small>
-                        </div>
-                    `;
+                    previewContent.appendChild(style);
+                    
+                    const headerDiv = document.createElement('h3');
+                    headerDiv.textContent = `${backup.entityName} - ${backup.chatName} 预览`;
+                    previewContent.appendChild(headerDiv);
+                    
+                    const contentDiv = document.createElement('div');
+                    
+                    // 为每条消息创建单独的盒子
+                    lastMessages.forEach(msg => {
+                        const messageBox = document.createElement('div');
+                        messageBox.className = 'message_box';
+                        
+                        const senderDiv = document.createElement('div');
+                        senderDiv.className = 'message_sender';
+                        senderDiv.textContent = msg.name || '未知';
+                        
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'message_content';
+                        contentDiv.innerHTML = processMessage(msg.mes);
+                        
+                        messageBox.appendChild(senderDiv);
+                        messageBox.appendChild(contentDiv);
+                        
+                        previewContent.appendChild(messageBox);
+                    });
+                    
+                    const footerDiv = document.createElement('div');
+                    footerDiv.style.marginTop = '10px';
+                    footerDiv.style.opacity = '0.7';
+                    footerDiv.style.fontSize = '0.9em';
+                    footerDiv.textContent = `显示最后 ${lastMessages.length} 条消息，共 ${chat.length} 条`;
+                    previewContent.appendChild(footerDiv);
                     
                     // 导入对话框系统
                     const { callGenericPopup, POPUP_TYPE } = await import('../../../popup.js');
@@ -1160,7 +1208,7 @@ jQuery(async () => {
                     await callGenericPopup(previewContent, POPUP_TYPE.DISPLAY, '', {
                         wide: true,
                         allowVerticalScrolling: true,
-                        leftAlign: true, // 设置文本左对齐
+                        leftAlign: true,
                         okButton: '关闭'
                     });
                     
